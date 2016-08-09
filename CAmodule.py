@@ -241,6 +241,11 @@ def calCustomNV(CT,cdf,tdf):
     CT[u'return_of_year_by_interval']=CT.last_nv**(245/CT.interval_trading_days)-1
     CT[u'sharp_ratio']=(CT.return_of_year_by_interval-R)/CT.annual_interval_nv_std
     
+    #get the total commission
+    CT[u'fare_rate']=cdf.groupby(by='FUND_ACCOUNT').FARE_RATE\
+    .apply(lambda x: x.iloc[-1])
+    
+    
     #CT.fillna(0,inplace=True)
     return CT
 
