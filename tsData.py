@@ -18,7 +18,7 @@ from datetime import datetime,timedelta
 import pandas as pd
 from WindPy import w
 import numpy as np
-
+import tables
 def fDuplicated(frame):
     """
     万得宏汇的期权数据因为时间戳的问题，有很多重复的
@@ -34,4 +34,19 @@ def fDuplicated(frame):
             .add(1000*np.arange(k)/k)
 
                 
-            
+def fDelErrorData(frame):
+    '''
+    删除9：15之前的以及15：00之后的数据
+    ''' 
+    frame.drop(frame[frame.time<91500000].index,inplace=True)
+    
+    
+def fCreatTimestamp(frame,name):    
+    '''
+    将生成timestamp,date+time
+    一般datetime  n_timestamp
+    '''
+    frame[name]=pd.to_datetime((frame.date.apply(str)+frame.time.apply(str)),\
+    format='%Y%m%d%H%M%S%f')
+    
+    
