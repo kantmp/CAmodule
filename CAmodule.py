@@ -37,7 +37,7 @@ R=0.0   #无风险收益率
 dir_url=u'D:/temp/testOP/'
 matplotlib.use('Agg')
 
-option_dict={(0L, 'C') : 'call_option_buyer',
+option_dict={(0L, 'C') : 'call_option_buyer',2
 (0L, 'P') : 'put_option_buyer',
 (1L, 'C') : 'call_option_seller',
 (1L, 'P') : 'put_option_seller',
