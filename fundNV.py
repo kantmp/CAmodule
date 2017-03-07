@@ -29,7 +29,11 @@ usecols=df.columns[0:7],parse_dates=[2])
 df2=pd.read_csv('D:/temp/fund/fund20170215.csv',\
 usecols=df.columns[7:df.columns.size])
 df2.columns = pd.to_datetime(df2.columns)
-df2.fillna(method='ffill',axis=1,inplace=True)
+#df2.fillna(method='ffill',axis=1,inplace=True)
+
+df2=df2.groupby(df2.columns.to_period('M'), axis=1)\
+.apply(lambda x:x.fillna(method='ffill',axis=1))
+
 df_A=df2.groupby(df2.columns.to_period('A'), axis=1).last()
 df_M=df2.groupby(df2.columns.to_period('M'), axis=1).last()
 df_A_pct=df_A.pct_change(axis=1)
@@ -49,8 +53,6 @@ fund_filter18_std=fund_year_std[df_M.count(axis=1,numeric_only=True)>=18]
 #[i for i in pd.period_range(start='2011-1',end='2017-1',freq='M')]
 
 
-
-
 # 计算平均值和std
 
 k1=fund_filter18_y.groupby(by='规模分组').mean()
@@ -66,9 +68,10 @@ k2.to_csv('D:/temp/fund/k2.csv')
 # 得到几类分组 fund_filter18_m['规模分组'].unique()
 # 筛选分组后 进行cut，然后用cut的值进行group
 # 或者尝试apply的 计算方法和多重groupby
+# 基金整体排名
 lables=['<20%','20%-40%','40%-60%','60%-80%','>80%']
-for i in pd.period_range(start='2011',end='2017',freq='A'):
+for i in pd.period_range(start='2012',end='2017',freq='A'):
     t13=pd.qcut(fund_filter18_y[i],5,lables)
-    fund_filter18_y=fund_filter18_y.join(t13,lsfuffix='q_')
+    fund_filter18_y=fund_filter18_y.join(t13,rsuffix='_q')    
     
-    
+#按规模分组，可以尝试一下
