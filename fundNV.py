@@ -21,6 +21,9 @@ import pandas as pd
 import matplotlib
 import numpy as np
 from datetime import datetime
+import statsmodels.api as sm
+import statsmodels.formula.api as smf
+
 
 df=pd.read_csv('D:/temp/fund/fund20170215.csv')
 
@@ -74,4 +77,10 @@ for i in pd.period_range(start='2012',end='2017',freq='A'):
     t13=pd.qcut(fund_filter18_y[i],5,lables)
     fund_filter18_y=fund_filter18_y.join(t13,rsuffix='_q')    
     
-#按规模分组，可以尝试一下
+#按规模分组，可以尝试一下multiindex
+    
+#test pyfolio
+t16=df_M_pct.loc[481]
+t16.index=t16.index.to_timestamp(how='end')
+t16.index=t16.index.tz_localize('UTC')
+pf.create_returns_tear_sheet(t16[:-3])
