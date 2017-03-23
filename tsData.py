@@ -100,4 +100,22 @@ def tableAppend(frame,table):
     ('bsize1', '<u4'), ('bsize2', '<u4')])
     table.append(tt)
     table.flush()
-         
+    
+    
+def tableCreate(fileh,):
+    '''
+    检查是否有，如果有则打印，不进行处理
+    从上倒下检查，标的名，年，月，日
+    如果没有则则创建整个路径
+    
+    此版本从根目录开始检查
+    '''
+    
+    
+__version__= '0.2'
+
+if __name__ == '__main__':
+    print 'tsData is ready'
+    base_url='D:/temp/h5/'
+    fileh = tbl.open_file(base_url+"test3.h5", mode="a")
+    

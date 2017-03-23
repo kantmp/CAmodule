@@ -18,11 +18,12 @@ Created on Thu Mar 02 14:40:26 2017
 """
 import pyfolio as pf
 import pandas as pd
-import matplotlib
+import matplotlib 
 import numpy as np
 from datetime import datetime
 import statsmodels.api as sm
 import statsmodels.formula.api as smf
+from statsmodels.sandbox.regression.predstd import wls_prediction_std
 
 
 df=pd.read_csv('D:/temp/fund/fund20170215.csv')
@@ -83,4 +84,10 @@ for i in pd.period_range(start='2012',end='2017',freq='A'):
 t16=df_M_pct.loc[481]
 t16.index=t16.index.to_timestamp(how='end')
 t16.index=t16.index.tz_localize('UTC')
-pf.create_returns_tear_sheet(t16[:-3])
+#pf.create_returns_tear_sheet(t16[:-3])
+
+t15=fund_filter18_std[fund_year_std['策略分类']!='债券型']
+#std 百分比   ?? 关于 column到底是数字还是string
+for i in range(2012,2017):
+    t14=pd.qcut(t15[i],5,lables)
+    t15=t15.join(t14,rsuffix='_q_std')
