@@ -19,6 +19,9 @@ import pandas as pd
 from WindPy import w
 import numpy as np
 import tables as tbl
+import os
+import seaborn
+
 
 base_url=''
 
@@ -38,7 +41,13 @@ class Particle(tbl.IsDescription):
     bsize1    = tbl.UInt32Col(pos=11)
     bsize2    = tbl.UInt32Col(pos=12)
     
-
+class Particle_K(tbl.IsDescription):
+    timestamp=tbl.Int64Col(pos=0)
+    p_open=tbl.UInt32Col(pos=1)
+    p_high=tbl.UInt32Col(pos=2)
+    p_low=tbl.UInt32Col(pos=3)
+    p_close=tbl.UInt32Col(pos=4)
+    
 
 def fDuplicated2(frame):
     """
@@ -90,7 +99,9 @@ def fCreatTimestamp(frame,name):
     format='%Y%m%d%H%M%S%f')
 
 
-def tableAppend(frame,table):
+def tableAppend(frame,fileh,group):
+    #frame的index不是timestamp类型    
+    #存储tick，储存分钟K线
     rec=frame.to_records(index=False,convert_datetime64=True)
     tt=rec[['timestamp','volume','turover','position',\
     'price','ask1','ask2','bid1','bid2','asize1','asize2','bsize1','bsize2']]
@@ -98,11 +109,32 @@ def tableAppend(frame,table):
     ('position', '<u4'), ('price', '<u4'), ('ask1', '<u4'), ('ask2', '<u4'), \
     ('bid1', '<u4'), ('bid2', '<u4'), ('asize1', '<u4'), ('asize2', '<u4'), \
     ('bsize1', '<u4'), ('bsize2', '<u4')])
-    table.append(tt)
-    table.flush()
+    try:    
+        table=fileh.create_table(group,'tick',Particle,'tick data')
+        table.append(tt)
+       
+    except tbl.NodeError:
+        print 'tick table is all ready'
+    
+    frame.set_index(frame.timestamp,inplace=True)
+    t1=frame.price.resample('min',how='ohlc')    
+    t1['timestamp']=t1.index
+    rec1=t1.to_records(index=False,convert_datetime64=True)
+    tt1=rec1[['timestamp','open','high','low','close']]
+    tt1=tt1.astype([('timestamp','<i8'),('open','<u4'),('high','<u4')\
+    ,('low','<u4'),('close','<u4')])
+    
+    try:
+        table=fileh.create_table(group,'min1',Particle_K,'1 minute k bar')
+        table.append(tt1)
+       
+    except tbl.NodeError:
+        print '1mintute table is all ready'
+        
+    fileh.flush()
     
     
-def tableCreate(fileh,):
+def PartitionCreate(fileh,table):
     '''
     检查是否有，如果有则打印，不进行处理
     从上倒下检查，标的名，年，月，日
@@ -110,8 +142,48 @@ def tableCreate(fileh,):
     
     此版本从根目录开始检查
     '''
+    ostr='OP'+table.iloc[1].wind_code[:8]
+    odate1=pd.to_datetime(table.date.apply(str)).iloc[1]
+    #op
+    try : 
+        ogroup=fileh.get_node(fileh.root_uep+ostr)
+    except tbl.NoSuchNodeError:
+        ogroup=fileh.create_group(fileh.root,ostr)
     
-    
+    #y
+    try:
+        y_group=ogroup._f_get_child('y'+str(odate1.year))
+    except tbl.NoSuchNodeError:
+        y_group = fileh.create_group(ogroup,'y'+str(odate1.year))
+        
+    #m
+    try:
+        m_group=y_group._f_get_child('m'+str(odate1.month))
+    except tbl.NoSuchNodeError:
+        m_group=fileh.create_group(y_group,'m'+str(odate1.month))
+        
+    #d
+    try:
+        d_group=m_group._f_get_child('d'+str(odate1.day))
+    except tbl.NoSuchNodeError:
+        d_group=fileh.create_group(m_group,'d'+str(odate1.day))
+        
+    return d_group
+        
+def FileIter(root):
+    assert os.path.isdir(root)
+    result=[]
+    for rt,dirs,files in os.walk(root):
+        for fl in files:
+            result.append(os.path.join(rt,fl))
+            
+    return result
+            
+
+
+
+
+
 __version__= '0.2'
 
 if __name__ == '__main__':
