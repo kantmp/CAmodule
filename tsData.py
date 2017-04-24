@@ -116,6 +116,7 @@ def tableAppend(frame,fileh,group):
     except tbl.NodeError:
         print 'tick table is all ready'
     
+    #需要剔除11：31到 12：59的 数据 
     frame.set_index(frame.timestamp,inplace=True)
     t1=frame.price.resample('min',how='ohlc')    
     t1['timestamp']=t1.index
@@ -180,14 +181,70 @@ def FileIter(root):
     return result
             
 
+def fetchPartition(fileh,opt,dt):
+    #通过 opt和 dt来处理得到
+    #opt=‘OP8位数’ dt按datetime来处理
+    try:
+        ystr='y'+str(dt.year)
+        mstr='m'+str(dt.month)
+        dstr='d'+str(dt.day)
+        gstr=opt+'/'+ystr+'/'+mstr+'/'+dstr
+        group=fileh.get_node(fileh.root,gstr)
+        return group
+    except (KeyError,tbl.NoSuchNodeError):
+        return False
+    
+    return group
 
+def fetchTable(group,tname):
+    #取得不同的table表
+    #取得逐日的数据，暂时不处理内部问题（如果表太大，无法读入内存再说）
+    try:    
+        tt=group._f_get_child(tname)
+        return tt.read()
+    except tbl.NoSuchNodeError:
+        return False
 
-
+def readRange(fileh,opt,st,dt,tname,key=False):
+    #key=False 将9：30之前的处理掉-
+    #合并返回数据 
+    #对输入暂时不进行处理   
+    start_date=pd.to_datetime(st)
+    end_date=pd.to_datetime(dt)
+    opt_name='OP'+str(opt)
+    dtt=dtt=pd.date_range(start=start_date,end=end_date)
+    #get Par    
+    GG=[]
+    for ik in dtt:
+        tmp=fetchPartition(fileh,opt_name,ik)
+        if tmp:
+            GG.append(tmp)
+    #get df,clean it ,concut it
+    DD=pd.DataFrame()
+    for jk in GG:
+        data=fetchTable(jk,tname)
+        df=pd.DataFrame.from_records(data,index=data['timestamp'].\
+        astype('datetime64[ns]'),exclude=['timestamp'])
+        #filter
+        y=df.index[1].year
+        m=df.index[1].month
+        d=df.index[1].day
+        t_filter=((df.index>pd.datetime(y,m,d,9,30))\
+        &(df.index<=pd.datetime(y,m,d,11,30))) | (df.index>pd.datetime(y,m,d,13,0))
+        DD=pd.concat([DD,df[t_filter]])
+    
+    return DD
+    
 
 __version__= '0.2'
 
 if __name__ == '__main__':
     print 'tsData is ready'
+    import sys
+    sys.path.append('d:/HUB')
+
     base_url='D:/temp/h5/'
-    fileh = tbl.open_file(base_url+"test3.h5", mode="a")
+    #fileh = tbl.open_file(base_url+"test3.h5", mode="a")
+    
+    fileh=tbl.open_file(base_url+"test3.h5", mode="r")
     
