@@ -13,14 +13,14 @@ File  HDF5
 
 @author: yangxs
 """
-import math
-from datetime import datetime,timedelta
+# import math
+# from datetime import datetime,timedelta
 import pandas as pd
-from WindPy import w
+# from WindPy import w
 import numpy as np
 import tables as tbl
 import os
-import seaborn
+# import seaborn
 
 
 base_url=''
@@ -40,7 +40,7 @@ class Particle(tbl.IsDescription):
     asize2    = tbl.UInt32Col(pos=10)
     bsize1    = tbl.UInt32Col(pos=11)
     bsize2    = tbl.UInt32Col(pos=12)
-    
+
 class Particle_K(tbl.IsDescription):
     timestamp=tbl.Int64Col(pos=0)
     p_open=tbl.UInt32Col(pos=1)
